@@ -1,10 +1,10 @@
 {
   "name": "social-app-backend",
   "version": "1.0.0",
-  "main": "App.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node App.js",
-    "dev": "nodemon App.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "dev:old": "nodemon App.js",
     "test": "jest --runInBand",
     "build": "echo 'No build step required for Node.js'",
