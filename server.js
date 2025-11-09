@@ -104,15 +104,15 @@ app.use("/uploads", express.static(uploadsDir, {
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Allow session creation for cross-domain
   store: store,
-  name: "connect.sid", // Standard session name
+  name: "connect.sid",
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     secure: NODE_ENV === "production", // HTTPS only in production
-    sameSite: NODE_ENV === "production" ? "none" : "lax",
-    httpOnly: true,
-    // Don't set domain - let browser handle it
+    sameSite: NODE_ENV === "production" ? "none" : "lax", // none for cross-domain
+    httpOnly: true, // Keep secure but allow cross-domain
+    // No domain restriction for cross-origin requests
   },
 }));
 
