@@ -85,13 +85,6 @@ app.use(
   })
 );
 
-app.get("/check-session", (req, res) => {
-  if (req.session.user) {
-    res.json({ message: "Session active", user: req.session.user });
-  } else {
-    res.json({ message: "No active session" });
-  }
-});
 // ==================== HEALTH ENDPOINT ====================
 
 app.get("/api/health", (req, res) => {
@@ -243,13 +236,23 @@ app.post("/api/test-signup", (req, res) => {
   });
 });
 
-// ==================== ROOT ENDPOINT ====================
+// ==================== SESSION & ROOT ENDPOINTS ====================
+
+// Check session endpoint
+app.get("/check-session", (req, res) => {
+  if (req.session.user) {
+    res.json({ message: "Session active", user: req.session.user });
+  } else {
+    res.json({ message: "No active session" });
+  }
+});
 
 app.get("/", (req, res) => {
   res.json({
     message: "Social Media API Server",
     endpoints: {
       health: "GET /api/health",
+      session: "GET /check-session",
       auth: {
         signup: "POST /api/auth/signup",
         login: "POST /api/auth/login",
@@ -271,6 +274,7 @@ app.use((req, res) => {
     error: "Endpoint not found",
     path: req.originalUrl,
     availableEndpoints: [
+      "GET /check-session",
       "POST /api/auth/signup",
       "POST /api/auth/login",
       "GET /api/posts",
@@ -301,8 +305,13 @@ async function startServer() {
     const { Server } = require("socket.io");
     io = new Server(server, {
       cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        origin: [
+          "http://localhost:5173",
+          "http://localhost:3000",
+          "https://rvu-connects.vercel.app",
+        ],
         methods: ["GET", "POST"],
+        credentials: true,
       },
     });
 
