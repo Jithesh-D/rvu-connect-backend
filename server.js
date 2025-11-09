@@ -126,6 +126,7 @@ app.get("/", (req, res) => {
     status: "running",
     endpoints: {
       health: "GET /api/health",
+      session: "GET /check-session",
       auth: {
         signup: "POST /api/auth/signup",
         login: "POST /api/auth/login",
@@ -148,6 +149,15 @@ app.get("/api/health", (req, res) => {
     allowedOrigins: getAllowedOrigins(),
     timestamp: new Date().toISOString(),
   });
+});
+
+// Check session endpoint
+app.get("/check-session", (req, res) => {
+  if (req.session.user) {
+    res.json({ message: "Session active", user: req.session.user });
+  } else {
+    res.json({ message: "No active session" });
+  }
 });
 
 // ==================== ROUTE LOADING ====================
