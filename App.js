@@ -51,12 +51,12 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://localhost:3000", 
-      "https://rvu-connects.onrender.com",
-      "https://rvu-connect.onrender.com"
+      "http://localhost:3000",
+      "https://rvu-connects.vercel.app"
     ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -74,11 +74,13 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: store,
+    name: "sessionId",
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       secure: process.env.NODE_ENV === "production", // HTTPS only in production
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,
+      domain: undefined, // Don't set domain for cross-origin
     },
   })
 );
