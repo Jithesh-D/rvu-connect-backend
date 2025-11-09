@@ -52,7 +52,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:3000",
-      "https://rvu-connects.vercel.app"
+      "https://rvu-connects.vercel.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
@@ -70,7 +70,7 @@ app.use("/uploads", express.static(uploadsDir));
 // Session middleware (CRITICAL FOR AUTH)
 app.use(
   session({
-    secret: SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: store,
@@ -85,6 +85,13 @@ app.use(
   })
 );
 
+app.get("/check-session", (req, res) => {
+  if (req.session.user) {
+    res.json({ message: "Session active", user: req.session.user });
+  } else {
+    res.json({ message: "No active session" });
+  }
+});
 // ==================== HEALTH ENDPOINT ====================
 
 app.get("/api/health", (req, res) => {
