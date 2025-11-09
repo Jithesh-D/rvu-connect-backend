@@ -106,13 +106,13 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: store,
-  name: "sessionId", // Custom session name
+  name: "connect.sid", // Standard session name
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     secure: NODE_ENV === "production", // HTTPS only in production
     sameSite: NODE_ENV === "production" ? "none" : "lax",
     httpOnly: true,
-    domain: NODE_ENV === "production" ? undefined : undefined, // Let browser handle
+    // Don't set domain - let browser handle it
   },
 }));
 

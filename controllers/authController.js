@@ -355,7 +355,12 @@ exports.googleAuth = async (req, res) => {
         return res.status(500).json({ error: 'Session save failed' });
       }
       
-      console.log(`🔐 Google login successful: ${email} (${NODE_ENV}) - Session saved`);
+      console.log(`🔐 Google login successful: ${email} (${NODE_ENV})`);
+      console.log('📝 Session details:', {
+        sessionId: req.sessionID,
+        userId: req.session.user.id,
+        email: req.session.user.email
+      });
       
       res.json({
         message: "Google login successful",
@@ -366,6 +371,7 @@ exports.googleAuth = async (req, res) => {
           profileImage: user.profileImage,
           createdAt: user.createdAt,
         },
+        sessionId: req.sessionID, // Add session ID for debugging
         redirectUrl: FRONTEND_URLS[NODE_ENV] + "/home"
       });
     });
