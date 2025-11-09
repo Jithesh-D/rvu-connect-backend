@@ -185,6 +185,7 @@ loadRoute("./Routes/messagesRoute", "/api/messages", "Messages");
 loadRoute("./Bot/routes/botRoute", "/api/bot", "Bot");
 loadRoute("./Bot/routes/testroute", "/api/test", "Test");
 loadRoute("./Bot/routes/gemini", "/api/gemini", "Gemini");
+loadRoute("./test-session", "/api/session-test", "Session Test");
 
 // ==================== ERROR HANDLING ====================
 
