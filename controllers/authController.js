@@ -150,6 +150,41 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
+// Test version without auth middleware
+exports.getCurrentUserTest = async (req, res) => {
+  try {
+    console.log("🧪 Profile test - Session info:", {
+      sessionId: req.sessionID,
+      hasSession: !!req.session,
+      hasUser: !!req.session?.user,
+      userId: req.session?.user?.id,
+      cookies: req.headers.cookie
+    });
+
+    if (req.session?.user?.id) {
+      const user = await User.findById(req.session.user.id).select("-password");
+      if (user) {
+        res.json({
+          user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            profileImage: user.profileImage || null,
+            createdAt: user.createdAt,
+          },
+        });
+      } else {
+        res.status(404).json({ error: "User not found in database" });
+      }
+    } else {
+      res.status(401).json({ error: "No session or user data" });
+    }
+  } catch (err) {
+    console.error("Profile test error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 // Handler to upload profile image (multipart/form-data)
 exports.uploadProfileImage = [
   upload.single("profileImage"),

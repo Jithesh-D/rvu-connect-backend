@@ -8,6 +8,7 @@ router.post("/login", authController.login);
 router.post("/google", authController.googleAuth);
 router.post("/logout", authController.logout);
 router.get("/me", authController.getCurrentUser); // Get current user profile
+router.get("/me-test", authController.getCurrentUserTest); // Test endpoint without auth
 router.get("/check", authController.checkAuth); // Check authentication status
 
 // Profile update and upload
