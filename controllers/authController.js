@@ -129,33 +129,34 @@ exports.login = async (req, res) => {
   }
 };
 
-// Get current user profile
+// Get current user profile with JWT
 exports.getCurrentUser = async (req, res) => {
   try {
-    if (req.session.user && req.session.user.id) {
-      const user = await User.findById(req.session.user.id).select("-password");
-
-      if (user) {
-        res.json({
-          user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            profileImage: user.profileImage || null,
-            createdAt: user.createdAt,
-          },
-        });
-      } else {
-        // User not found in database
-        req.session.destroy();
-        res.status(404).json({ error: "User not found" });
-      }
-    } else {
-      res.status(401).json({ error: "Not authenticated" });
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
     }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your_jwt_secret");
+    const user = await User.findById(decoded.id).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage || null,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (err) {
     console.error("Get current user error:", err);
-    res.status(500).json({ error: "Server error" });
+    res.status(401).json({ error: "Invalid token" });
   }
 };
 
