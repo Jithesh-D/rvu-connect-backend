@@ -5,6 +5,13 @@ const upload = require("../Middleware/upload");
 const authMiddleware = require("../Middleware/auth");
 
 // Create post endpoint - POST /api/posts/
+// Test endpoint without auth
+postRouter.post(
+  "/test",
+  upload.single("image"),
+  postController.createPost
+);
+
 postRouter.post(
   "/",
   authMiddleware,
