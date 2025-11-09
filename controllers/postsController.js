@@ -31,7 +31,7 @@ exports.createPost = async (req, res) => {
       category: category || "general",
       reactions: 0,
       image,
-      author: req.session?.user?.id || undefined,
+      author: req.user?.id || req.user?._id,
     });
 
     await post.save();

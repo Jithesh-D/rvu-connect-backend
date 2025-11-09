@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const User = require("../Model/userModel");
 const { OAuth2Client } = require("google-auth-library");
+const jwt = require("jsonwebtoken");
 const path = require("path");
 const multer = require("multer");
 
@@ -103,10 +104,18 @@ exports.login = async (req, res) => {
       email: user.email,
     };
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET || "your_jwt_secret",
+      { expiresIn: "7d" }
+    );
+
     console.log("🔐 Login successful for:", email, "Session ID:", req.sessionID);
 
     res.json({
       message: "Login successful",
+      token,
       user: {
         id: user._id,
         username: user.username,
@@ -355,15 +364,18 @@ exports.googleAuth = async (req, res) => {
         return res.status(500).json({ error: 'Session save failed' });
       }
       
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET || "your_jwt_secret",
+        { expiresIn: "7d" }
+      );
+      
       console.log(`🔐 Google login successful: ${email} (${NODE_ENV})`);
-      console.log('📝 Session details:', {
-        sessionId: req.sessionID,
-        userId: req.session.user.id,
-        email: req.session.user.email
-      });
       
       res.json({
         message: "Google login successful",
+        token,
         user: {
           id: user._id,
           username: user.username,
@@ -371,7 +383,6 @@ exports.googleAuth = async (req, res) => {
           profileImage: user.profileImage,
           createdAt: user.createdAt,
         },
-        sessionId: req.sessionID, // Add session ID for debugging
         redirectUrl: FRONTEND_URLS[NODE_ENV] + "/home"
       });
     });
