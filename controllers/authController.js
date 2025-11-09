@@ -348,18 +348,26 @@ exports.googleAuth = async (req, res) => {
       profileImage: user.profileImage
     };
 
-    console.log(`🔐 Google login successful: ${email} (${NODE_ENV})`);
-
-    res.json({
-      message: "Google login successful",
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        profileImage: user.profileImage,
-        createdAt: user.createdAt,
-      },
-      redirectUrl: FRONTEND_URLS[NODE_ENV] + "/home"
+    // Explicitly save session
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Session save error:', err);
+        return res.status(500).json({ error: 'Session save failed' });
+      }
+      
+      console.log(`🔐 Google login successful: ${email} (${NODE_ENV}) - Session saved`);
+      
+      res.json({
+        message: "Google login successful",
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          profileImage: user.profileImage,
+          createdAt: user.createdAt,
+        },
+        redirectUrl: FRONTEND_URLS[NODE_ENV] + "/home"
+      });
     });
   } catch (err) {
     console.error("❌ Google auth error:", err);
