@@ -4,6 +4,14 @@ const { checkToxicity } = require("../utils/toxicityChecker");
 
 exports.createPost = async (req, res) => {
   try {
+    console.log("📝 Create post request:", {
+      sessionId: req.sessionID,
+      hasUser: !!req.session?.user,
+      userId: req.session?.user?.id,
+      body: req.body,
+      hasFile: !!req.file
+    });
+
     const { title, body, tags, category } = req.body;
     let image = null;
 
@@ -11,8 +19,8 @@ exports.createPost = async (req, res) => {
       image = `/uploads/${req.file.filename}`;
     }
 
-    if (!title || !body) {
-      return res.status(400).json({ message: "Title and body are required" });
+    if (!body || !body.trim()) {
+      return res.status(400).json({ message: "Post content is required" });
     }
 
     // Check toxicity in both title and body

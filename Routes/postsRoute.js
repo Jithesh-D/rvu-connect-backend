@@ -4,8 +4,17 @@ const postController = require("../controllers/postsController");
 const upload = require("../Middleware/upload");
 const authMiddleware = require("../Middleware/auth");
 
+// Create post endpoint - POST /api/posts/
 postRouter.post(
   "/",
+  authMiddleware,
+  upload.single("image"),
+  postController.createPost
+);
+
+// Alternative endpoint for compatibility - POST /api/posts/create
+postRouter.post(
+  "/create",
   authMiddleware,
   upload.single("image"),
   postController.createPost
