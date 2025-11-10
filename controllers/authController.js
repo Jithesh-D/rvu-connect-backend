@@ -66,13 +66,6 @@ exports.signup = async (req, res) => {
 
     await newUser.save();
 
-    // Set session after signup
-    req.session.user = {
-      id: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
-    };
-
     res.status(201).json({
       message: "User created successfully",
       user: {
@@ -98,12 +91,6 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
-    req.session.user = {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-    };
-
     // Generate JWT token
     const token = jwt.sign(
       { id: user._id, email: user.email },
@@ -111,7 +98,7 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    console.log("🔐 Login successful for:", email, "Session ID:", req.sessionID);
+    console.log("🔐 Login successful for:", email);
 
     res.json({
       message: "Login successful",
@@ -151,6 +138,7 @@ exports.getCurrentUser = async (req, res) => {
         username: user.username,
         email: user.email,
         profileImage: user.profileImage || null,
+        loginMethod: user.isGoogleUser ? 'google' : 'email',
         createdAt: user.createdAt,
       },
     });
@@ -200,24 +188,24 @@ exports.uploadProfileImage = [
   upload.single("profileImage"),
   async (req, res) => {
     try {
-      if (!req.session.user || !req.session.user.id) {
-        return res.status(401).json({ error: "Not authenticated" });
+      const token = req.headers.authorization?.replace("Bearer ", "");
+      if (!token) {
+        return res.status(401).json({ error: "No token provided" });
       }
 
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "your_jwt_secret");
+      
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
       const imagePath = `/uploads/${req.file.filename}`;
 
-      const user = await User.findById(req.session.user.id);
+      const user = await User.findById(decoded.id);
       if (!user) return res.status(404).json({ error: "User not found" });
 
       user.profileImage = imagePath;
       await user.save();
-
-      // Also update session info so frontend /api/auth/check or session reads the new image
-      req.session.user.profileImage = imagePath;
 
       res.json({ profileImage: imagePath });
     } catch (err) {
@@ -230,22 +218,22 @@ exports.uploadProfileImage = [
 // Handler to update username or profileImage via JSON
 exports.updateProfile = async (req, res) => {
   try {
-    if (!req.session.user || !req.session.user.id) {
-      return res.status(401).json({ error: "Not authenticated" });
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
     }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your_jwt_secret");
     const { username, profileImage } = req.body;
-    const user = await User.findById(req.session.user.id);
+    const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     if (username && username.trim().length >= 3) {
       user.username = username.trim();
-      req.session.user.username = user.username;
     }
 
     if (profileImage) {
       user.profileImage = profileImage;
-      req.session.user.profileImage = profileImage;
     }
 
     await user.save();
@@ -262,28 +250,37 @@ exports.updateProfile = async (req, res) => {
 };
 
 // Check authentication status
-exports.checkAuth = (req, res) => {
-  if (req.session.user) {
-    res.json({
-      authenticated: true,
-      user: req.session.user,
-    });
-  } else {
-    res.json({
-      authenticated: false,
-    });
+exports.checkAuth = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      return res.json({ authenticated: false });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your_jwt_secret");
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (user) {
+      res.json({
+        authenticated: true,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          profileImage: user.profileImage
+        },
+      });
+    } else {
+      res.json({ authenticated: false });
+    }
+  } catch (err) {
+    res.json({ authenticated: false });
   }
 };
 
 // Logout user
 exports.logout = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ error: "Logout failed" });
-    }
-    res.clearCookie("connect.sid"); // Clear the session cookie
-    res.json({ message: "Logout successful" });
-  });
+  res.json({ message: "Logout successful" });
 };
 
 // Google OAuth credential verification and login/signup
@@ -350,42 +347,26 @@ exports.googleAuth = async (req, res) => {
       }
     }
 
-    // Create server-side session
-    req.session.user = {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      profileImage: user.profileImage
-    };
-
-    // Explicitly save session
-    req.session.save((err) => {
-      if (err) {
-        console.error('❌ Session save error:', err);
-        return res.status(500).json({ error: 'Session save failed' });
-      }
-      
-      // Generate JWT token
-      const token = jwt.sign(
-        { id: user._id, email: user.email },
-        process.env.JWT_SECRET || "your_jwt_secret",
-        { expiresIn: "7d" }
-      );
-      
-      console.log(`🔐 Google login successful: ${email} (${NODE_ENV})`);
-      
-      res.json({
-        message: "Google login successful",
-        token,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          profileImage: user.profileImage,
-          createdAt: user.createdAt,
-        },
-        redirectUrl: FRONTEND_URLS[NODE_ENV] + "/home"
-      });
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET || "your_jwt_secret",
+      { expiresIn: "7d" }
+    );
+    
+    console.log(`🔐 Google login successful: ${email} (${NODE_ENV})`);
+    
+    res.json({
+      message: "Google login successful",
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt,
+      },
+      redirectUrl: FRONTEND_URLS[NODE_ENV] + "/home"
     });
   } catch (err) {
     console.error("❌ Google auth error:", err);

@@ -8,8 +8,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
+
 
 // ==================== ENVIRONMENT CONFIGURATION ====================
 
@@ -46,20 +45,7 @@ console.log(`🌍 Environment: ${NODE_ENV}`);
 console.log(`🔗 Allowed Origins:`, getAllowedOrigins());
 console.log(`🗄️  Database: ${MONGODB_URI.includes('mongodb+srv') ? 'MongoDB Atlas' : 'Local MongoDB'}`);
 
-// ==================== MONGODB SESSION STORE ====================
 
-const store = new MongoDBStore({
-  uri: MONGODB_URI,
-  collection: "sessions",
-  connectionOptions: {
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-  },
-});
-
-store.on("error", (error) => {
-  console.error("❌ Session store error:", error);
-});
 
 // ==================== MIDDLEWARE SETUP ====================
 
@@ -100,21 +86,7 @@ app.use("/uploads", express.static(uploadsDir, {
   }
 }));
 
-// Session middleware - Environment Aware
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true, // Allow session creation for cross-domain
-  store: store,
-  name: "connect.sid",
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    secure: NODE_ENV === "production", // HTTPS only in production
-    sameSite: NODE_ENV === "production" ? "none" : "lax", // none for cross-domain
-    httpOnly: true, // Keep secure but allow cross-domain
-    // No domain restriction for cross-origin requests
-  },
-}));
+
 
 // ==================== HEALTH & INFO ENDPOINTS ====================
 
@@ -145,20 +117,12 @@ app.get("/api/health", (req, res) => {
     status: "healthy",
     environment: NODE_ENV,
     database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-    session: req.sessionID ? "active" : "no session",
     allowedOrigins: getAllowedOrigins(),
     timestamp: new Date().toISOString(),
   });
 });
 
-// Check session endpoint
-app.get("/check-session", (req, res) => {
-  if (req.session.user) {
-    res.json({ message: "Session active", user: req.session.user });
-  } else {
-    res.json({ message: "No active session" });
-  }
-});
+
 
 // ==================== ROUTE LOADING ====================
 
