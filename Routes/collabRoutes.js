@@ -7,7 +7,7 @@ const {
   expressInterest,
   getInterests,
 } = require("../controllers/contributionController");
-const authMiddleware = require("../Middleware/auth");
+const jwtAuthMiddleware = require("../Middleware/jwtAuth");
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ router.post("/", addContribution);
 router.get("/", getContributions);
 router.put("/:id", updateContribution);
 router.delete("/:id", deleteContribution);
-router.post("/:id/interest", authMiddleware, expressInterest);
-router.get("/interests", authMiddleware, getInterests);
+router.post("/:id/interest", jwtAuthMiddleware, expressInterest);
+router.get("/interests", jwtAuthMiddleware, getInterests);
 
 module.exports = router;
