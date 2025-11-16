@@ -35,6 +35,10 @@ exports.createPost = async (req, res) => {
     });
 
     await post.save();
+    
+    // Populate author data before sending response
+    await post.populate("author", "username profileImage");
+    
     res.status(201).json(post);
   } catch (error) {
     console.error("Error creating post:", error);
@@ -240,6 +244,10 @@ exports.editPost = async (req, res) => {
     }
 
     await post.save();
+    
+    // Populate author data before sending response
+    await post.populate("author", "username profileImage");
+    
     res.status(200).json(post);
   } catch (error) {
     console.error("Error updating post:", error);

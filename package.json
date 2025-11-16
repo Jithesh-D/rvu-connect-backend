@@ -17,6 +17,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cheerio": "^1.1.2",
     "connect-mongodb-session": "^5.0.0",
@@ -37,7 +38,7 @@
   "devDependencies": {
     "jest": "^29.6.1",
     "mongodb-memory-server": "^8.12.2",
-    "supertest": "^6.3.3",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "supertest": "^6.3.3"
   }
 }

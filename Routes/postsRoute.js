@@ -2,28 +2,28 @@ const express = require("express");
 const postRouter = express.Router();
 const postController = require("../controllers/postsController");
 const upload = require("../Middleware/upload");
-const jwtAuthMiddleware = require("../Middleware/jwtAuth");
+const postAuth = require("../Middleware/postAuth");
 
-// Create post with JWT auth
+// Create post with post auth
 postRouter.post(
   "/",
-  jwtAuthMiddleware,
+  postAuth,
   upload.single("image"),
   postController.createPost
 );
 
 // Like/unlike posts
-postRouter.post("/:id/like", jwtAuthMiddleware, postController.likePost);
-postRouter.delete("/:id/like", jwtAuthMiddleware, postController.unlikePost);
+postRouter.post("/:id/like", postAuth, postController.likePost);
+postRouter.delete("/:id/like", postAuth, postController.unlikePost);
 
 // Get posts (no auth needed)
 postRouter.get("/", postController.getPosts);
 
 // Delete/edit posts
-postRouter.delete("/:id", jwtAuthMiddleware, postController.deletePost);
+postRouter.delete("/:id", postAuth, postController.deletePost);
 postRouter.patch(
   "/:id",
-  jwtAuthMiddleware,
+  postAuth,
   upload.single("image"),
   postController.editPost
 );

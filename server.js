@@ -141,6 +141,7 @@ loadRoute("./Routes/authRoute", "/api/auth", "Auth");
 loadRoute("./Routes/postsRoute", "/api/posts", "Posts");
 loadRoute("./Routes/eventRoute", "/api/events", "Events");
 loadRoute("./Routes/eventAuthRoute", "/api/event-auth", "Event Auth");
+loadRoute("./Routes/postAuthRoute", "/api/post-auth", "Post Auth");
 loadRoute("./Routes/commentRoute", "/api/comments", "Comments");
 loadRoute("./Routes/gangsRoute", "/api/gangs", "Gangs");
 loadRoute("./Routes/gangPostsRoute", "/api/gang-posts", "Gang Posts");
@@ -150,6 +151,49 @@ loadRoute("./Bot/routes/botRoute", "/api/bot", "Bot");
 loadRoute("./Bot/routes/testroute", "/api/test", "Test");
 loadRoute("./Bot/routes/gemini", "/api/gemini", "Gemini");
 loadRoute("./test-session", "/api/session-test", "Session Test");
+
+// Post Login Route
+app.post("/api/login", async (req, res) => {
+  try {
+    const bcrypt = require("bcrypt");
+    const Auth = require("./Model/AuthModel");
+    
+    const { email, password } = req.body;
+    console.log("Login attempt:", { email, password: "***" });
+    
+    if (!email || !password) {
+      return res.json({ success: false, message: "Email and password required" });
+    }
+    
+    const user = await Auth.findOne({ email });
+    console.log("User found:", user ? "Yes" : "No");
+    
+    if (!user) {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+    
+    console.log("Stored password:", user.password);
+    
+    // Check if password is hashed (bcrypt hashes start with $2b$)
+    let isMatch;
+    if (user.password.startsWith('$2b$')) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // Plain text comparison
+      isMatch = password === user.password;
+    }
+    console.log("Password match:", isMatch);
+    
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.json({ success: false, message: "Server error" });
+  }
+});
 
 // ==================== ERROR HANDLING ====================
 
